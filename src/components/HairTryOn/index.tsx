@@ -86,19 +86,25 @@ function HairTryOn() {
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">AI Hair Try-On</h1>
         <p className="text-sm">
-          Upload a hairstyle reference and your selfie to preview the look.
+          1) Upload the hairstyle reference. 2) Upload your selfie. 3) Generate
+          your preview.
         </p>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2">
-            <span className="block font-medium">Upload hairstyle reference</span>
+          <label className="flex h-full flex-col gap-3 rounded border p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Hairstyle reference</p>
+              <p className="text-xs text-neutral-600">
+                The look you want to try on.
+              </p>
+            </div>
             <input
               type="file"
               accept="image/*"
               onChange={(event) => handleFileChange(event, "model")}
-              className="w-full"
+              className="text-sm"
             />
             {modelImage && (
               <img
@@ -109,13 +115,18 @@ function HairTryOn() {
             )}
           </label>
 
-          <label className="space-y-2">
-            <span className="block font-medium">Upload your selfie</span>
+          <label className="flex h-full flex-col gap-3 rounded border p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Your selfie</p>
+              <p className="text-xs text-neutral-600">
+                Front-facing, good lighting.
+              </p>
+            </div>
             <input
               type="file"
               accept="image/*"
               onChange={(event) => handleFileChange(event, "selfie")}
-              className="w-full"
+              className="text-sm"
             />
             {selfieImage && (
               <img
