@@ -3,14 +3,17 @@
 
 import { useCallback, useState, type ChangeEvent, type FormEvent } from "react";
 
-const readFileAsBase64 = (file: File) =>
+type HairTryOnProps = {
+  onBook?: (payload: { selfie: string; output: string }) => void;
+};
+
+const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === "string") {
-        const base64 = result.split(",")[1] || result;
-        resolve(base64);
+        resolve(result);
       } else {
         reject(new Error("Unable to read file."));
       }
@@ -19,23 +22,25 @@ const readFileAsBase64 = (file: File) =>
     reader.readAsDataURL(file);
   });
 
-function HairTryOn() {
+function HairTryOn({ onBook }: HairTryOnProps) {
   const [modelImage, setModelImage] = useState<string | null>(null);
   const [selfieImage, setSelfieImage] = useState<string | null>(null);
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasBothImages = Boolean(modelImage && selfieImage);
+
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>, type: "model" | "selfie") => {
       const file = event.target.files?.[0];
       if (!file) return;
       try {
-        const base64 = await readFileAsBase64(file);
+        const dataUrl = await readFileAsDataUrl(file);
         if (type === "model") {
-          setModelImage(base64);
+          setModelImage(dataUrl);
         } else {
-          setSelfieImage(base64);
+          setSelfieImage(dataUrl);
         }
       } catch (err) {
         setError((err as Error).message || "Failed to load image.");
@@ -82,23 +87,60 @@ function HairTryOn() {
   );
 
   return (
-    <section className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">AI Hair Try-On</h1>
-        <p className="text-sm">
-          1) Upload the hairstyle reference. 2) Upload your selfie. 3) Generate
-          your preview.
+    <section className="space-y-10">
+      <header className="space-y-3 rounded-2xl bg-neutral-900/90 p-6 text-white shadow-lg">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">
+              Style Preview Studio
+            </p>
+            <h1 className="text-3xl font-semibold">See the look before the chair</h1>
+          </div>
+          <div className="rounded-full bg-green-500/10 px-4 py-2 text-sm font-medium text-green-200">
+            Live preview ready
+          </div>
+        </div>
+        <p className="text-sm text-neutral-200">
+          Drop a hairstyle reference and your selfie, then preview how it comes together.
+          Keep faces clear and lighting even for the best results.
         </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { label: "Step 1", text: "Upload hairstyle reference" },
+            { label: "Step 2", text: "Upload your selfie" },
+            { label: "Step 3", text: "Generate & compare" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm"
+            >
+              <p className="text-xs font-semibold text-neutral-300">
+                {item.label}
+              </p>
+              <p className="text-neutral-100">{item.text}</p>
+            </div>
+          ))}
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex h-full flex-col gap-3 rounded border p-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Hairstyle reference</p>
-              <p className="text-xs text-neutral-600">
-                The look you want to try on.
-              </p>
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-2xl border border-neutral-200/80 bg-white/80 p-6 shadow-lg backdrop-blur"
+      >
+        <div className="grid gap-6 lg:grid-cols-2">
+          <label className="group flex h-full flex-col gap-3 rounded-xl border border-dashed border-neutral-300 bg-white/70 p-4 transition hover:border-neutral-500">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-neutral-800">
+                  Hairstyle reference
+                </p>
+                <p className="text-xs text-neutral-600">
+                  Clear shot of the style you want to try on.
+                </p>
+              </div>
+              <span className="rounded-full bg-neutral-900 px-3 py-1 text-xs font-medium text-white">
+                Upload
+              </span>
             </div>
             <input
               type="file"
@@ -107,20 +149,29 @@ function HairTryOn() {
               className="text-sm"
             />
             {modelImage && (
-              <img
-                src={`data:image/jpeg;base64,${modelImage}`}
-                alt="Hairstyle reference preview"
-                className="h-48 w-full rounded border object-cover"
-              />
+              <div className="overflow-hidden rounded-lg border border-neutral-200 shadow-sm">
+                <img
+                  src={modelImage}
+                  alt="Hairstyle reference preview"
+                  className="h-60 w-full object-cover"
+                />
+              </div>
             )}
           </label>
 
-          <label className="flex h-full flex-col gap-3 rounded border p-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Your selfie</p>
-              <p className="text-xs text-neutral-600">
-                Front-facing, good lighting.
-              </p>
+          <label className="group flex h-full flex-col gap-3 rounded-xl border border-dashed border-neutral-300 bg-white/70 p-4 transition hover:border-neutral-500">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-neutral-800">
+                  Your selfie
+                </p>
+                <p className="text-xs text-neutral-600">
+                  Front-facing, good lighting, no heavy filters.
+                </p>
+              </div>
+              <span className="rounded-full bg-neutral-900 px-3 py-1 text-xs font-medium text-white">
+                Upload
+              </span>
             </div>
             <input
               type="file"
@@ -129,50 +180,92 @@ function HairTryOn() {
               className="text-sm"
             />
             {selfieImage && (
-              <img
-                src={`data:image/jpeg;base64,${selfieImage}`}
-                alt="Selfie preview"
-                className="h-48 w-full rounded border object-cover"
-              />
+              <div className="overflow-hidden rounded-lg border border-neutral-200 shadow-sm">
+                <img
+                  src={selfieImage}
+                  alt="Selfie preview"
+                  className="h-60 w-full object-cover"
+                />
+              </div>
             )}
           </label>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="rounded border px-4 py-2 disabled:opacity-60"
-          >
-            {isLoading ? "Generating..." : "Generate Try-On"}
-          </button>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={isLoading || !hasBothImages}
+              className="rounded-lg bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoading ? "Generating..." : "Generate Try-On"}
+            </button>
+            <span className="text-xs text-neutral-600">
+              {hasBothImages
+                ? "Ready to generate."
+                : "Upload both images to enable."}
+            </span>
+          </div>
+
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
         </div>
       </form>
 
-      {outputImage && selfieImage && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Before / After</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Before</p>
+      <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-6 shadow-lg backdrop-blur">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-neutral-900">
+            Before / After
+          </h2>
+          <span className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+            Preview
+          </span>
+        </div>
+
+        {!outputImage && (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-600">
+            Generate a try-on to see your result here.
+          </div>
+        )}
+
+        {outputImage && selfieImage && (
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold text-neutral-800">Before</p>
               <img
-                src={`data:image/jpeg;base64,${selfieImage}`}
+                src={selfieImage}
                 alt="Before hairstyle"
-                className="w-full rounded border object-cover"
+                className="w-full rounded-lg border border-neutral-200 object-cover"
               />
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">After</p>
+            <div className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold text-neutral-800">After</p>
               <img
-                src={`data:image/jpeg;base64,${outputImage}`}
+                src={`data:image/png;base64,${outputImage}`}
                 alt="After hairstyle"
-                className="w-full rounded border object-cover"
+                className="w-full rounded-lg border border-neutral-200 object-cover"
               />
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onBook?.({ selfie: selfieImage, output: outputImage })
+                  }
+                  className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+                >
+                  Book this look
+                </button>
+                <p className="text-xs text-neutral-600">
+                  Attach this preview to your booking request.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }

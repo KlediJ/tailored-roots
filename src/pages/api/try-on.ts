@@ -4,12 +4,25 @@ type TryOnRequestBody = {
   modelImage?: string;
   selfieImage?: string;
   prompt?: string;
+  model?: string;
 };
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3-pro-image-preview";
 
-const stripBase64Prefix = (value?: string) =>
-  value ? value.replace(/^data:image\/\w+;base64,/, "") : "";
+const parseImage = (
+  value?: string,
+): { mimeType: string; data: string } | null => {
+  if (!value) return null;
+
+  const dataUrlMatch = value.match(/^data:(image\/[\w+.-]+);base64,(.+)$/);
+  if (dataUrlMatch) {
+    return { mimeType: dataUrlMatch[1], data: dataUrlMatch[2] };
+  }
+
+  // Fallback: assume jpeg if only raw base64 is provided.
+  return { mimeType: "image/jpeg", data: value };
+};
 
 export const config = {
   api: {
@@ -33,6 +46,11 @@ export default async function handler(
   }
 
   const { modelImage, selfieImage, prompt }: TryOnRequestBody = req.body || {};
+  const model =
+    (req.body as any)?.model ||
+    DEFAULT_MODEL;
+
+  console.log("REQ BODY:", req.body);
 
   if (!modelImage || !selfieImage) {
     return res
@@ -40,7 +58,26 @@ export default async function handler(
       .json({ error: "modelImage and selfieImage are required." });
   }
 
+  const parsedModel = parseImage(modelImage);
+  const parsedSelfie = parseImage(selfieImage);
+
+  if (!parsedModel || !parsedSelfie) {
+    return res
+      .status(400)
+      .json({ error: "Invalid images. Please re-upload and try again." });
+  }
+
+  console.log("API KEY PRESENT:", !!GOOGLE_API_KEY);
+  console.log("REQ BODY:", {
+    modelMime: parsedModel.mimeType,
+    selfieMime: parsedSelfie.mimeType,
+    modelBytes: parsedModel.data.length,
+    selfieBytes: parsedSelfie.data.length,
+    targetModel: model,
+  });
+
   const requestBody = {
+    model,
     contents: [
       {
         role: "user",
@@ -48,31 +85,40 @@ export default async function handler(
           {
             text:
               prompt ||
-              "Apply the hairstyle from the reference image to the person in the selfie. Keep the face and background natural.",
+              [
+                "You are a pro stylist image editor.",
+                "Use the first image ONLY for hair reference.",
+                "Use the second image (selfie) as the base. The final face, skin tone, expression, body/pose, clothing, and background must match the selfie exactly.",
+                "Do NOT copy or replace the face from the reference. Ignore the reference face entirely—only take hair shape, length, texture, part, and color.",
+                "If the selfie is low quality, dim, cropped, or partially obstructed, clean it up: normalize lighting, remove noise, and infer any obscured hair naturally while keeping identity intact.",
+                "Do not alter identity or facial features. Only change the hair.",
+              ].join(" "),
           },
+          { text: "Client selfie (base for final image):" },
           {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: stripBase64Prefix(modelImage),
+            inlineData: {
+              mimeType: parsedSelfie.mimeType,
+              data: parsedSelfie.data,
             },
           },
+          { text: "Hairstyle reference (hair only, ignore face/background):" },
           {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: stripBase64Prefix(selfieImage),
+            inlineData: {
+              mimeType: parsedModel.mimeType,
+              data: parsedModel.data,
             },
           },
         ],
       },
     ],
     generationConfig: {
-      responseMimeType: "image/jpeg",
+      responseModalities: ["IMAGE"],
     },
   };
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GOOGLE_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -82,14 +128,14 @@ export default async function handler(
       },
     );
 
+    const result = await response.json();
+
     if (!response.ok) {
-      const errorText = await response.text();
+      console.error("Gemini error:", result);
       return res
         .status(response.status)
-        .json({ error: "Gemini request failed", details: errorText });
+        .json({ error: "Gemini request failed", details: result });
     }
-
-    const result = await response.json();
 
     const imagePart =
       result?.candidates?.[0]?.content?.parts?.find(
@@ -104,6 +150,8 @@ export default async function handler(
         .status(500)
         .json({ error: "No image returned from Gemini response." });
     }
+
+    console.log("OUTPUT BYTES:", outputImage.length);
 
     return res.status(200).json({ outputImage });
   } catch (error) {
