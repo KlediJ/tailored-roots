@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 90" aria-label="Tailored Roots logo">
-  <!-- Hair root icon -->
-  <g transform="translate(20,18)" stroke="#f5f5f4" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 0 C18 16 18 32 20 48"></path>
-    <path d="M12 48 C12 60 28 60 28 48"></path>
-    <path d="M12 50 C6 54 4 58 2 62"></path>
-    <path d="M28 50 C34 54 36 58 38 62"></path>
+  <!-- Hair motion icon -->
+  <g transform="translate(22,20)" stroke="#f5f5f4" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- primary strand -->
+    <path d="M12 0 C22 16 20 34 10 52"></path>
+    <!-- secondary accent strand -->
+    <path d="M20 8 C30 26 26 44 18 58"></path>
   </g>
 
   <!-- Wordmark -->
