@@ -22,6 +22,15 @@ const readFileAsDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const fetchAsDataUrl = async (path: string) => {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error("Unable to load inspiration image.");
+  const blob = await res.blob();
+  return await readFileAsDataUrl(
+    new File([blob], "inspiration.jpg", { type: blob.type || "image/jpeg" }),
+  );
+};
+
 const getDataUrlSizeBytes = (dataUrl: string) => {
   const base64 = dataUrl.split(",")[1] || "";
   return Math.ceil((base64.length * 3) / 4);
@@ -66,8 +75,35 @@ function HairTryOn({ onBook }: HairTryOnProps) {
   const [outputImage, setOutputImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inspirationLoading, setInspirationLoading] = useState<string | null>(
+    null,
+  );
+  const [selectedInspirationId, setSelectedInspirationId] = useState<
+    string | null
+  >(null);
 
   const hasBothImages = Boolean(modelImage && selfieImage);
+
+  const inspirations = [
+    {
+      id: "dimensional-blonde",
+      title: "Dimensional Blonde",
+      image: "/lookbook/dimensional-blonde.jpg",
+    },
+    {
+      id: "lived-in-brunette",
+      title: "Lived-In Brunette",
+      image: "/lookbook/lived-in-brunette.jpg",
+    },
+    { id: "copper-glow", title: "Copper Glow", image: "/lookbook/copper-glow.jpg" },
+    { id: "silver-blend", title: "Silver Blend", image: "/lookbook/silver-blend.jpg" },
+    {
+      id: "protective-twist",
+      title: "Protective Twist",
+      image: "/lookbook/protective-twist.jpg",
+    },
+    { id: "silk-press", title: "Silk Press", image: "/lookbook/silk-press.jpg" },
+  ];
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>, type: "model" | "selfie") => {
@@ -84,12 +120,27 @@ function HairTryOn({ onBook }: HairTryOnProps) {
         } else {
           setSelfieImage(dataUrl);
         }
+        setSelectedInspirationId(null);
       } catch (err) {
         setError((err as Error).message || "Failed to load image.");
       }
     },
     [],
   );
+
+  const handleInspirationSelect = useCallback(async (id: string, path: string) => {
+    setError(null);
+    setInspirationLoading(id);
+    try {
+      const dataUrl = await fetchAsDataUrl(path);
+      setModelImage(dataUrl);
+      setSelectedInspirationId(id);
+    } catch (err) {
+      setError((err as Error).message || "Failed to load inspiration.");
+    } finally {
+      setInspirationLoading(null);
+    }
+  }, []);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -129,12 +180,12 @@ function HairTryOn({ onBook }: HairTryOnProps) {
   );
 
   return (
-    <section className="space-y-10">
+    <section id="tryon" className="space-y-10">
       <header className="space-y-3 rounded-2xl bg-neutral-900/90 p-6 text-white shadow-lg">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">
-              Style Preview Studio
+              Tailored Roots Preview
             </p>
             <h1 className="text-3xl font-semibold">See the look before the chair</h1>
           </div>
@@ -143,8 +194,8 @@ function HairTryOn({ onBook }: HairTryOnProps) {
           </div>
         </div>
         <p className="text-sm text-neutral-200">
-          Drop a hairstyle reference and your selfie, then preview how it comes together.
-          Keep faces clear and lighting even for the best results.
+          Upload or pick a hairstyle reference, add your selfie, and we’ll blend the look while
+          keeping your face, skin tone, and background unchanged.
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
@@ -174,7 +225,7 @@ function HairTryOn({ onBook }: HairTryOnProps) {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-neutral-800">
-                  Hairstyle reference
+                  Hairstyle reference (upload or pick below)
                 </p>
                 <p className="text-xs text-neutral-600">
                   Clear shot of the style you want to try on.
@@ -195,7 +246,7 @@ function HairTryOn({ onBook }: HairTryOnProps) {
                 <img
                   src={modelImage}
                   alt="Hairstyle reference preview"
-                  className="h-60 w-full object-cover"
+                  className="h-72 w-full object-cover"
                 />
               </div>
             )}
@@ -226,7 +277,7 @@ function HairTryOn({ onBook }: HairTryOnProps) {
                 <img
                   src={selfieImage}
                   alt="Selfie preview"
-                  className="h-60 w-full object-cover"
+                  className="h-72 w-full object-cover"
                 />
               </div>
             )}
@@ -257,23 +308,17 @@ function HairTryOn({ onBook }: HairTryOnProps) {
         </div>
       </form>
 
-      <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-6 shadow-lg backdrop-blur">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-neutral-900">
-            Before / After
-          </h2>
-          <span className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-            Preview
-          </span>
-        </div>
-
-        {!outputImage && (
-          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-600">
-            Generate a try-on to see your result here.
+      {outputImage && selfieImage && (
+        <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-6 shadow-lg backdrop-blur">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-neutral-900">
+              Before / After
+            </h2>
+            <span className="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+              Preview
+            </span>
           </div>
-        )}
 
-        {outputImage && selfieImage && (
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
               <p className="text-sm font-semibold text-neutral-800">Before</p>
@@ -306,10 +351,79 @@ function HairTryOn({ onBook }: HairTryOnProps) {
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      <div
+        id="inspiration"
+        className="space-y-3 rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-lg"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+              Curated inspiration
+            </p>
+            <p className="text-sm text-neutral-700">
+              Or pick a house look as your hairstyle reference.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {inspirations.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => handleInspirationSelect(item.id, item.image)}
+            className={`flex flex-col overflow-hidden rounded-xl border text-left shadow-sm transition ${
+                selectedInspirationId === item.id
+                  ? "border-neutral-900"
+                  : "border-neutral-200 hover:-translate-y-0.5 hover:shadow-md"
+              }`}
+            disabled={!!inspirationLoading}
+          >
+              <div className="relative h-56 w-full bg-neutral-200">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-semibold text-neutral-900">
+                  {item.title}
+                </p>
+                <p className="text-xs text-neutral-600">
+                  {inspirationLoading === item.id
+                    ? "Loading..."
+                    : "Use this look"}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
 export default HairTryOn;
+  const inspirations = [
+    {
+      id: "dimensional-blonde",
+      title: "Dimensional Blonde",
+      image: "/lookbook/dimensional-blonde.jpg",
+    },
+    {
+      id: "lived-in-brunette",
+      title: "Lived-In Brunette",
+      image: "/lookbook/lived-in-brunette.jpg",
+    },
+    { id: "copper-glow", title: "Copper Glow", image: "/lookbook/copper-glow.jpg" },
+    { id: "silver-blend", title: "Silver Blend", image: "/lookbook/silver-blend.jpg" },
+    {
+      id: "protective-twist",
+      title: "Protective Twist",
+      image: "/lookbook/protective-twist.jpg",
+    },
+    { id: "silk-press", title: "Silk Press", image: "/lookbook/silk-press.jpg" },
+  ];

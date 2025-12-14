@@ -8,7 +8,7 @@ type Look = {
   title: string;
   category: "Blonde" | "Brunette" | "Transform" | "Protective";
   description: string;
-  accent: string;
+  image?: string;
 };
 
 const looks: Look[] = [
@@ -17,42 +17,42 @@ const looks: Look[] = [
     title: "Dimensional Blonde",
     category: "Blonde",
     description: "Soft ribbons of brightness with a shadow root for easy grow-out.",
-    accent: "from-amber-200 via-white to-amber-50",
+    image: "/lookbook/dimensional-blonde.jpg",
   },
   {
     id: "lived-in-brunette",
     title: "Lived-In Brunette",
     category: "Brunette",
     description: "Seamless brunette with caramel panels and minimal upkeep.",
-    accent: "from-stone-700 via-neutral-900 to-stone-800",
+    image: "/lookbook/lived-in-brunette.jpg",
   },
   {
     id: "copper-glow",
     title: "Copper Glow",
     category: "Transform",
     description: "High-shine copper with a soft face frame.",
-    accent: "from-orange-500 via-amber-300 to-rose-200",
+    image: "/lookbook/copper-glow.jpg",
   },
   {
     id: "silver-blend",
     title: "Silver Blend",
     category: "Transform",
     description: "Cool silver melt to soften natural greys and add polish.",
-    accent: "from-slate-500 via-slate-200 to-white",
+    image: "/lookbook/silver-blend.jpg",
   },
   {
     id: "protective-twist",
     title: "Protective Twist",
     category: "Protective",
     description: "Knotless twists with hydrating prep and scalp care focus.",
-    accent: "from-emerald-500 via-emerald-300 to-lime-200",
+    image: "/lookbook/protective-twist.jpg",
   },
   {
     id: "silk-press",
     title: "Silk Press",
     category: "Protective",
     description: "Glossy silk press with trim and heat-protective finish.",
-    accent: "from-neutral-800 via-neutral-900 to-black",
+    image: "/lookbook/silk-press.jpg",
   },
 ];
 
@@ -109,9 +109,15 @@ function Gallery() {
             key={look.id}
             className="group overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
-            <div
-              className={`h-40 w-full bg-gradient-to-br ${look.accent} transition group-hover:scale-[1.02]`}
-            />
+            {look.image ? (
+              <img
+                src={look.image}
+                alt={look.title}
+                className="h-48 w-full object-cover transition group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div className="h-48 w-full bg-neutral-200" />
+            )}
             <div className="space-y-2 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-neutral-900">
