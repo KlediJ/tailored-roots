@@ -8,7 +8,8 @@ type TryOnRequestBody = {
 };
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3-pro-image-preview";
+const DEFAULT_MODEL =
+  process.env.GEMINI_MODEL || "gemini-3-pro-image-preview";
 
 const parseImage = (
   value?: string,
@@ -27,7 +28,7 @@ const parseImage = (
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "10mb",
+      sizeLimit: "20mb",
     },
   },
 };
@@ -50,6 +51,8 @@ export default async function handler(
     (req.body as any)?.model ||
     DEFAULT_MODEL;
 
+  console.log("GOOGLE_API_KEY exists:", !!process.env.GOOGLE_API_KEY);
+  console.log("GOOGLE_API_KEY length:", process.env.GOOGLE_API_KEY?.length);
   console.log("REQ BODY:", req.body);
 
   if (!modelImage || !selfieImage) {

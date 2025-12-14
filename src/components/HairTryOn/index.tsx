@@ -35,6 +35,10 @@ function HairTryOn({ onBook }: HairTryOnProps) {
     async (event: ChangeEvent<HTMLInputElement>, type: "model" | "selfie") => {
       const file = event.target.files?.[0];
       if (!file) return;
+      if (file.size > 6 * 1024 * 1024) {
+        setError("Please upload images under 6MB.");
+        return;
+      }
       try {
         const dataUrl = await readFileAsDataUrl(file);
         if (type === "model") {
