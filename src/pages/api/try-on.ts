@@ -28,7 +28,8 @@ const parseImage = (
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "20mb",
+      // Keep below Vercel's ~4.5MB function body limit; front-end also enforces.
+      sizeLimit: "8mb",
     },
   },
 };

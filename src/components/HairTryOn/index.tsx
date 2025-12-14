@@ -22,6 +22,44 @@ const readFileAsDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const getDataUrlSizeBytes = (dataUrl: string) => {
+  const base64 = dataUrl.split(",")[1] || "";
+  return Math.ceil((base64.length * 3) / 4);
+};
+
+const downscaleImage = async (
+  file: File,
+  maxDim = 1400,
+  qualities = [0.82, 0.72],
+) => {
+  const dataUrl = await readFileAsDataUrl(file);
+  const img = new Image();
+
+  return await new Promise<string>((resolve, reject) => {
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const targetW = Math.max(1, Math.round(img.width * scale));
+      const targetH = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Could not get canvas context"));
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+
+      for (const quality of qualities) {
+        const out = canvas.toDataURL("image/jpeg", quality);
+        if (getDataUrlSizeBytes(out) <= 4 * 1024 * 1024) {
+          return resolve(out);
+        }
+      }
+      return reject(new Error("Image is too large after compression."));
+    };
+    img.onerror = () => reject(new Error("Unable to process image."));
+    img.src = dataUrl;
+  });
+};
+
 function HairTryOn({ onBook }: HairTryOnProps) {
   const [modelImage, setModelImage] = useState<string | null>(null);
   const [selfieImage, setSelfieImage] = useState<string | null>(null);
@@ -35,12 +73,12 @@ function HairTryOn({ onBook }: HairTryOnProps) {
     async (event: ChangeEvent<HTMLInputElement>, type: "model" | "selfie") => {
       const file = event.target.files?.[0];
       if (!file) return;
-      if (file.size > 6 * 1024 * 1024) {
-        setError("Please upload images under 6MB.");
+      if (file.size > 12 * 1024 * 1024) {
+        setError("Please upload images under 12MB.");
         return;
       }
       try {
-        const dataUrl = await readFileAsDataUrl(file);
+        const dataUrl = await downscaleImage(file);
         if (type === "model") {
           setModelImage(dataUrl);
         } else {
