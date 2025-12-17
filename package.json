@@ -12,6 +12,9 @@
     "prisma:migrate": "prisma migrate dev --schema prisma/schema.sqlite.prisma --name init",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts"
   },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.15.0",
     "date-fns": "^4.1.0",
