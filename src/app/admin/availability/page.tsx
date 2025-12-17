@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Rule = {
   id: string;
@@ -76,7 +77,11 @@ export default function AdminAvailability() {
   }, []);
 
   useEffect(() => {
-    if (token) localStorage.setItem("adminToken", token);
+    if (token) {
+      localStorage.setItem("adminToken", token);
+    } else {
+      localStorage.removeItem("adminToken");
+    }
   }, [token]);
 
   useEffect(() => {
@@ -155,6 +160,48 @@ export default function AdminAvailability() {
     }
   };
 
+  if (!token) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-neutral-900 to-slate-800 text-white px-4 py-10 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-xl space-y-6">
+          <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+            <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">
+              Admin
+            </p>
+            <h1 className="text-3xl font-semibold text-white">
+              Availability access
+            </h1>
+            <p className="text-sm text-neutral-300">
+              Enter the admin token to manage hours.
+            </p>
+          </header>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg space-y-3">
+            <label className="text-xs uppercase tracking-[0.2em] text-neutral-400">
+              Admin token
+            </label>
+            <input
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white focus:border-white/60 focus:outline-none"
+              placeholder="Enter admin token"
+            />
+            <div className="flex items-center justify-between text-xs text-neutral-400">
+              <span>Token is saved locally after entry.</span>
+              <Link
+                href="/admin"
+                className="rounded-full border border-white/20 px-2.5 py-1 text-[11px] font-semibold text-white hover:border-white/50"
+              >
+                Admin home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-neutral-900 to-slate-800 text-white px-4 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -170,21 +217,28 @@ export default function AdminAvailability() {
               Publish weekly hours and block out closed dates.
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Link
+              href="/admin"
+              className="rounded-full border border-white/20 px-3 py-1 text-white transition hover:border-white/50 hover:bg-white/10"
+            >
+              Admin home
+            </Link>
+            <button
+              onClick={() => setToken("")}
+              className="rounded-full border border-white/20 px-3 py-1 text-white transition hover:border-white/50 hover:bg-white/10"
+            >
+              Log out
+            </button>
+          </div>
         </header>
 
         <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
-          <label className="text-sm text-neutral-200">
-            Admin token (from env `ADMIN_TOKEN`)
-          </label>
-          <input
-            type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="w-full max-w-md rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white focus:border-white/60 focus:outline-none"
-            placeholder="Enter admin token to manage availability"
-          />
+          <p className="text-sm text-neutral-200">
+            Admin token is active for this session.
+          </p>
           <p className="text-xs text-neutral-400">
-            Token is stored locally for convenience.
+            Use Admin home to change or clear it.
           </p>
         </div>
 

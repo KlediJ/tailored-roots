@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Booking from "@/components/Booking";
 import Gallery from "@/components/Gallery";
 import HairTryOn from "@/components/HairTryOn";
@@ -44,6 +45,12 @@ export default function Page() {
             <span className="rounded-full border border-white/20 px-3 py-1 text-white/80">
               Hours: Tue–Sat, 10a–6p
             </span>
+            <Link
+              href="/admin"
+              className="rounded-full border border-white/20 px-3 py-1 text-white/80 transition hover:border-white/50 hover:bg-white/10"
+            >
+              Admin login
+            </Link>
           </div>
         </header>
 

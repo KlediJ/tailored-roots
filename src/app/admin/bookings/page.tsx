@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   addMonths,
   endOfMonth,
@@ -156,6 +157,8 @@ export default function AdminBookings() {
   useEffect(() => {
     if (adminToken) {
       localStorage.setItem("adminToken", adminToken);
+    } else {
+      localStorage.removeItem("adminToken");
     }
   }, [adminToken]);
 
@@ -204,6 +207,48 @@ export default function AdminBookings() {
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
   }, [activeDate, slots]);
 
+  if (!adminToken) {
+    return (
+      <main className="min-h-screen bg-[#0b0d11] text-white px-4 py-10 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-xl space-y-6">
+          <header className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-white/0 p-6 shadow-2xl">
+            <p className="text-xs uppercase tracking-[0.24em] text-neutral-300">
+              Admin
+            </p>
+            <h1 className="text-3xl font-semibold text-white">
+              Booking access
+            </h1>
+            <p className="text-sm text-neutral-200">
+              Enter the admin token to view bookings.
+            </p>
+          </header>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg space-y-3">
+            <label className="text-xs uppercase tracking-[0.2em] text-neutral-400">
+              Admin token
+            </label>
+            <input
+              type="password"
+              value={adminToken}
+              onChange={(e) => setAdminToken(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white focus:border-white/60 focus:outline-none"
+              placeholder="Enter admin token"
+            />
+            <div className="flex items-center justify-between text-xs text-neutral-400">
+              <span>Token is saved locally after entry.</span>
+              <Link
+                href="/admin"
+                className="rounded-full border border-white/20 px-2.5 py-1 text-[11px] font-semibold text-white hover:border-white/50"
+              >
+                Admin home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#0b0d11] text-white px-4 py-10 sm:px-8 lg:px-12">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -221,6 +266,18 @@ export default function AdminBookings() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/admin"
+                className="rounded-full border border-white/30 px-3.5 py-2 text-xs font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+              >
+                Admin home
+              </Link>
+              <button
+                onClick={() => setAdminToken("")}
+                className="rounded-full border border-white/30 px-3.5 py-2 text-xs font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+              >
+                Log out
+              </button>
               {["ALL", ...statuses].map((status) => (
                 <button
                   key={status}
@@ -252,32 +309,17 @@ export default function AdminBookings() {
 
         <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">
-                  Admin token
-                </p>
-                <p className="text-sm text-neutral-200">
-                  Required for listing, updating, and deleting.
-                </p>
-              </div>
-              <button
-                onClick={() => setAdminToken("")}
-                className="rounded-full border border-white/20 px-3 py-1 text-[11px] font-semibold text-white hover:border-white/50"
-              >
-                Clear
-              </button>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">
+                Admin token
+              </p>
+              <p className="text-sm text-neutral-200">
+                Session active. Use Admin home to change token.
+              </p>
             </div>
-            <input
-              type="password"
-              value={adminToken}
-              onChange={(e) => setAdminToken(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white focus:border-white/60 focus:outline-none"
-              placeholder="Enter admin token to view/update bookings"
-            />
-            <p className="text-xs text-neutral-400">
-              Stored locally for convenience.
-            </p>
+            <div className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white/80">
+              Authenticated
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
