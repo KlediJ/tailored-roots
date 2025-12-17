@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id              String   @id @default(cuid())
+  name            String
+  phone           String
+  notes           String?
+  previewUrl      String?
+  status          String   @default("PENDING") // PENDING | CONFIRMED | DECLINED | DONE
+  requestedStart  DateTime?
+  requestedEnd    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AvailabilityRule {
+  id         String   @id @default(cuid())
+  dayOfWeek  Int      // 0 = Sunday ... 6 = Saturday
+  startTime  String   // HH:mm (local)
+  endTime    String   // HH:mm (local)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Blackout {
+  id        String   @id @default(cuid())
+  date      DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

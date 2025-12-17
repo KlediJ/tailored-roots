@@ -12,6 +12,9 @@
 - `npm run build` — production build.
 - `npm run start` — run the built app.
 - `npm run lint` — ESLint checks.
+- `npm run prisma:generate` — generate Prisma client.
+- `npm run prisma:migrate` — run a dev migration (sqlite by default).
+- `npm run prisma:seed` — seed availability (Tue–Fri 09–19, Sat 09–16) into the DB.
 
 ## Current AI Try-On Setup
 - Default model: `gemini-3-pro-image-preview` (override via `GEMINI_MODEL` env or `model` field in the request).
@@ -38,3 +41,10 @@
 ## Security & Configuration Tips
 - Set `GOOGLE_API_KEY` (or `GEMINI_API_KEY`) in `.env.local`; never commit secrets.
 - Restart `npm run dev` after updating env vars.
+- DB scaffold: Prisma + sqlite. Add `DATABASE_URL="file:./dev.db"` (or your Postgres URL) to `.env.local`, then run `npm run prisma:migrate` and `npm run prisma:generate`.
+- Admin token: set `ADMIN_TOKEN` in `.env.local` (and prod) for protected admin endpoints.
+- New APIs:
+  - `/api/bookings` (GET/POST/PATCH/DELETE). GET/PATCH/DELETE require `ADMIN_TOKEN` via `x-admin-token` or Bearer. POST is public for client bookings.
+  - `/api/availability` (GET/POST/DELETE). GET returns slots for next 7 days. POST/DELETE require `ADMIN_TOKEN` to manage rules/blackouts.
+  - Debug admin read-only: `/api/debug/availability-rules`, `/api/debug/blackouts` (require `ADMIN_TOKEN`).
+- Ideal flow: upload previews to storage and store URLs in bookings; `previewUrl` is optional for now.
