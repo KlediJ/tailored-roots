@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init",
+    "postinstall": "node ./scripts/prisma-generate.js",
+    "prisma:generate": "node ./scripts/prisma-generate.js",
+    "prisma:migrate": "prisma migrate dev --schema prisma/schema.sqlite.prisma --name init",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
